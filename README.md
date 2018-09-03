@@ -1,2 +1,3 @@
 # gp-json
-Working with JSON data in Greenplum Database
+
+The *Getting Started Guide* for ***Working with JSON data in Greenplum Database*** is available [here](GETTING-STARTED-GUIDE.md).
