@@ -82,11 +82,22 @@ The following table details the types of storage directives and possible values 
 
 ### Preparing mock-up JSON data
 
+[data](https://github.com/cantzakas/gp-json/tree/master/data)
+- [MOCK_DATA.json](https://github.com/cantzakas/gp-json/blob/master/data/MOCK_DATA.json)
+
 ### Preparing the tables
+
+- [CREATE_TABLE.sql](https://github.com/cantzakas/gp-json/blob/master/sql/CREATE_TABLE.sql)
 
 ### Loading JSON data into the tables
 
+- [COPY_DATA.sql](https://github.com/cantzakas/gp-json/blob/master/sql/COPY_DATA.sql)
+- [INSERT_DATA.sql](https://github.com/cantzakas/gp-json/blob/master/sql/INSERT_DATA.sql)
+
+
 ## Results
+
+- [FINAL_REPORT.sql](https://github.com/cantzakas/gp-json/blob/master/sql/FINAL_REPORT.sql)
 
 | Compression Ratio vs. json\_standard | Table |
 | :---:                                | :---- |
