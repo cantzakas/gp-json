@@ -1,154 +1,134 @@
 # JSON Data Compression in Pivotal Greenplum Database
 
-The experiment described below, investigates the compression capabilities available in Pivotal Greenplum Database in relation with JSON data types.
+General information for Table and Data compression on Greenplum Database is available on [Greenplum Database Administration Guide](https://gpdb.docs.pivotal.io/latest/admin_guide/ddl/ddl-storage.html).
 
-## Greenplum Database Tables and Compression
+The experiment described below, focuses on checking the compression capabilities available in Pivotal Greenplum Database in relation with JSON data types.
 
-Greenplum Database is built for advanced Data Warehouse and Analytic workloads at scale. Both Open Source and the Commercial (Pivotal) Release of Greenplum Database provide a number of table types and compression options that the architect can employ to store data in the most efficient way possible.
+# Experiment Definition
 
-While some newer database offerings only provide the column-oriented option, Greenplum Database provides both row-oriented and column-oriented table types, which means the data architect can select the table storage method that best suits the related data storage requirement. In addition, unlike other products , Greenplum Database offers multiple ways to logically partition table data, either by range or by a list of values, with the ability to create multi-level partitions of a single table to optimize data storage and query access. The flexibility and power of Greenplum Database goes one step further, where each partition of a single table can utilize its own storage method (row vs. column orientation) and compression type (`ZLIB` with various levels, column oriented `RLE`, as an example). 
+## Scope
 
-Internally, information can be stored using the traditional PostgreSQL HEAP model, ideally suited for tables with ongoing changes to the data (inserts, updates, deletes)or the append-optimized table model is ideally suited for data that is loaded in large batches and is rarely, if ever, updated or deleted after the initial commit to the table. This model also offers the widest range of storage methods: row and column oriented, with a number of compression options to be applied at the row level, as well as on individual columns within a table. For the greatest flexibility in data storage, data architects can combine an append-optimized, column-oriented design with a variety of data compression methods on a per-column basis, for each column in the table definition.
+- Pivotal Greenplum Database v5.11.2 Sandbox OVA
+- 2GB RAM
+- 2 CPU Cores
+- 1x Master Segment, no Master Standby configured
+- 2x Primary Segments, no Mirror Segments configured
+- `gp_vmem_protect_limit`= 8192MB
+- `max_statement_mem`= 200MB
+- `statement_mem`= 125MB
 
-## Using Compression (Append-Optimized Tables Only)
+## Goals
 
-There are two types of in-database compression available in the Greenplum Database for append-optimized tables:
+- Demonstrate the use of compression algorithms available at both OSS and Commercial (Pivotal) Greenplum Database versions for JSON data.
+- Demonstrate the different compression ratios achieved using different compression algorithms and parameter values.
+- Share the data and the process with the community, so others can replicate and run the same tests for themselves
 
-- Table-level compression is applied to an entire table.
-- Column-level compression is applied to a specific column. You can apply different column-level compression algorithms to different columns.
+## Anti-goals
 
-The following table summarizes the available compression algorithms:
+- Collect or present any loading and querying performance statistics or metrics related to the different compression algorithms and parameter values used in this test.
+ 
 
-###### Table 1. Compression Algorithms for Append-Optimized Tables
+## Targeted Outcomes
 
-| Table Orientation | Available Compression Types | Supported Algorithms |
-| :---------------- | :-------------------------- | :------------------- |
-| Row               | Table                       | `ZLIB` and `QUICKLZ `     |
-| Column            | Column and Table            | `RLE_TYPE`, `ZLIB `, and `QUICKLZ` |
+- Identify Best Practises on compressing JSON data on Greenplum Database
+- Share learnings with the Greenplum Database community
 
-When choosing a compression type and level for append-optimized tables, consider these factors:
+## Experiment Process
 
-- **CPU usage**. Your segment systems must have the available CPU power to compress and uncompress the data.
-- **Compression ratio/disk size**. Minimizing disk size is one factor, but also consider the time and CPU capacity required to compress and scan data. Find the optimal settings for efficiently compressing data without causing excessively long compression times or slow scan rates.
-- **Speed of compression**. QuickLZ compression generally uses less CPU capacity and compresses data faster at a lower compression ratio than zlib. zlib provides higher compression ratios at lower speeds.   
-  For example, at compression level 1 (`compresslevel=1`), `QUICKLZ` and `ZLIB` have comparable compression ratios, though at different speeds. Using `ZLIB` with `compresslevel=6` can significantly increase the compression ratio compared to QuickLZ, though with lower compression speed.
-- **Speed of decompression/scan rate**. Performance with compressed append-optimized tables depends on hardware, query tuning settings, and other factors. Perform comparison testing to determine the actual performance in your environment.
-  
+### 1. Create test JSON data
+
+For generating our input JSON data, we made use of the [Mockaroo](https://www.mocharoo.com) application; Mockaroo's Free plans are limited to 200 requests per day and can generate up to 1,000 rows of realistic test data per request. For our tests, we generated a total of 15K rows with the following format (check [Mockaroo Documentation](https://www.mockaroo.com/api/docs) for more information on the supported types):
+
+###### Table 1. Test JSON data specification
+
+| Field Name | Type |
+| :---       | :--- |
+| id         | _Row Number_ |
+| first_name | _First Name_ |
+| last_name  | _Last Name_  |
+| email      | _Email Address_ |
+| ip_address | _IP Address v4_ |
+
+Each of the 15K rows generated, looked similar to:
+
+```
+{"id":14480, "first_name":"Starlin", "last_name":"Franseco", "email":"sfransecodb@nasa.gov", "gender":"Female", "ip_address":"103.141.21.92"}
+
+```
+
+The full generated dataset is available [here](https://github.com/cantzakas/gp-json/blob/master/data/MOCK_DATA.json).
+
+### 2. Prepare data tables
+
+Different data table were then created for each of the baseline (no compression) and the different compression algorithms and parameters used. In total, the following tables were created:
+
+###### Table 2. Test data tables specification
+
+| Table Name      | Storage Model | Table Orientation | Definition |
+| :---            | :---          | :---              | :---       |
+| json\_standard  | Append-Optimized | Row | The original/baseline, non-compressed table |
+| json\_zlib1     | Append-Optimized | Row | COMPRESSTYPE =`ZLIB`, COMPRESSLEVEL = 1     |
+| json\_zlib1     | Append-Optimized | Row | COMPRESSTYPE =`ZLIB`, COMPRESSLEVEL = 5     |
+| json\_zlib1     | Append-Optimized | Row | COMPRESSTYPE =`ZLIB`, COMPRESSLEVEL = 9     |
+| json\_quicklz   | Append-Optimized | Row | COMPRESSTYPE =`QUICKLZ`                     |
+| json\_rle1      | Append-Optimized | Row | COMPRESSTYPE =`RLE_TYPE`, COMPRESSLEVEL = 1 |
+| json\_rle2      | Append-Optimized | Row | COMPRESSTYPE =`RLE_TYPE`, COMPRESSLEVEL = 2 |
+| json\_rle3      | Append-Optimized | Row | COMPRESSTYPE =`RLE_TYPE`, COMPRESSLEVEL = 3 |
+| json\_rle4      | Append-Optimized | Row | COMPRESSTYPE =`RLE_TYPE`, COMPRESSLEVEL = 4 |
+| json\_zlib1\_blocksize8K | Append-Optimized | Column | COMPRESSTYPE =`ZLIB`, COMPRESSLEVEL = 1, BLOCKSIZE = 8192 |
+| json\_zlib1\_blocksize16K | Append-Optimized | Column | COMPRESSTYPE =`ZLIB`, COMPRESSLEVEL = 1, BLOCKSIZE = 16384 |
+| json\_zlib1\_blocksize32K | Append-Optimized | Column | COMPRESSTYPE =`ZLIB`, COMPRESSLEVEL = 1, BLOCKSIZE = 32768 |
+| json\_quicklz\_blocksize8K | Append-Optimized | Column | COMPRESSTYPE =`QUICKLZ`, BLOCKSIZE = 8192 |
+| json\_quicklz\_blocksize16K | Append-Optimized | Column | COMPRESSTYPE =`QUICKLZ`, BLOCKSIZE = 16384 |
+| json\_quicklz\_blocksize32K | Append-Optimized | Column | COMPRESSTYPE =`QUICKLZ`, BLOCKSIZE = 32768 |
+| json\_rle4\_blocksize8K | Append-Optimized | Column | COMPRESSTYPE =`RLE_TYPE`, COMPRESSLEVEL = 4, BLOCKSIZE = 8192 |
+| json\_rle4\_blocksize16K | Append-Optimized | Column | COMPRESSTYPE =`RLE_TYPE`, COMPRESSLEVEL = 4, BLOCKSIZE = 16384 |
+| json\_rle4\_blocksize32K | Append-Optimized | Column | COMPRESSTYPE =`RLE_TYPE`, COMPRESSLEVEL = 4, BLOCKSIZE = 32768 |
+
+Each of these tables were created with exactly one column, named `col1` which was of data type `JSON` and the data were `DISTRIBUTED RANDOMLY` across the availabel Greenplum database segments. For example, the baseline, non-compressed table definition is:
+
+```sql
+CREATE TABLE json_standard (
+	col1 JSON)
+WITH (appendonly = TRUE)
+DISTRIBUTED RANDOMLY;
+```
+
+The complete set of SQL commands for creating the tables (DDL scripts) above is available as a single SQL script [here](https://github.com/cantzakas/gp-json/blob/master/sql/CREATE_TABLE.sql).
+
+### 3. Load JSON data into tables
+
+Loading the generated JSON data into the tables, was done in two steps:
+
+- First, we used Greenplum/PostgreSQL `COPY` command to bulk load data into the baseline, **json_standard**, table, using the script available [here](https://github.com/cantzakas/gp-json/blob/master/sql/COPY_DATA.sql).
+- Then, we incrementally loaded each of the remaining **json_\*** tables, using the scripts available [here](https://github.com/cantzakas/gp-json/blob/master/sql/INSERT_DATA.sql). 
+
   | **Note**: |
   | :--- |
-  | Do not create compressed append-optimized tables on file systems that use compression. If the file system on which your segment data directory resides is a compressed file system, your append-optimized table must not use compression. |
+  | In order to create `JSON` data type columns of variable `BLOCKSIZE`, we created arrays of JSON data; each array, was grouping together JSON rows based on the result of modulo of JSON id by {300, 150, 75}. i.e. |
   
-  Performance with compressed append-optimized tables depends on hardware, query tuning settings, and other factors. You should perform comparison testing to determine the actual performance in your environment.
-  
-  | **Note**: |
-  | :--- |
-  | `QUICKLZ` compression level can only be set to level 1; no other options are available. Compression level with `ZLIB` can be set at values from 1 - 9. Compression level with `RLE` can be set at values from 1 - 4. An `ENCODING` clause specifies compression type and level for individual columns. When an `ENCODING` clause conflicts with a `WITH` clause, the `ENCODING `clause has higher precedence than the `WITH` clause. |
-  
-## Adding Column-level Compression
+  ```sql
+  INSERT INTO json_quicklz_blocksize32K
+	SELECT array_to_json(array_agg(col1))
+	FROM (
+		SELECT col1::text, ((col1->>'id')::int)%75 AS modulo150_result
+		FROM json_standard
+	) A
+	GROUP BY modulo150_result;
+  ```
 
-You can add the following storage directives to a column for append-optimized tables with column orientation:
+### 4. Run & collect compression ratio results
 
-- Compression type
-- Compression level
-- Block size for a column
-
-Add storage directives using the `CREATE TABLE`, `ALTER TABLE`, and `CREATE TYPE` commands.
-
-The following table details the types of storage directives and possible values for each.
-
-###### Table 2. Storage Directives for Column-level Compression
-
-| Name              | Definition          | Values                          | Comment                        |
-| :---              | :---                | :---                            | :---                           |
-| `COMPRESSTYPE`    | Type of compression | `ZLIB`: deflate algorithm       | Values are not case-sensitive. |
-|                   |                     | `QUICKLZ`: fast compression     |                                |
-|                   |                     | `RLE_TYPE`: run-length encoding |                                |
-|                   |                     | `none`: no compression           |                                |
-| `COMPRESSLEVEL `  | Compression level   | `ZLIB` compression: 1-9        | 1 is the fastest method with the least compression.<BR><BR>9 is the slowest method with the most compression.<BR><BR>1 is the default value. |
-|                   |                     | `QUICKLZ` compression: <BR><BR>1 - use compression | 1 is the default value. |
-|                   |                     | `RLE_TYPE` compression: 1 – 4<BR><BR>1 - apply RLE only<BR><BR>2 - apply RLE then apply zlib compression level 1<BR><BR>3 - apply RLE then apply zlib compression level 5<BR><BR>4 - apply RLE then apply zlib compression level 9 | 1 is fastest method with the least compression<BR><BR>4 is the slowest method with the most compression.<BR><BR>1 is the default value. |
-| `BLOCKSIZE `      | The size in bytes for each block in the table | `8192` - `2097152` | The value must be a multiple of 8192. |
-
-The following is the format for adding storage directives.
-
-```
-[ ENCODING ( storage_directive [,…] ) ]
-```
-where the word `ENCODING` is required and the storage directive has three parts:
-
-- The name of the directive
-- An equals sign
-- The specification
-
-Separate multiple storage directives with a comma. Apply a storage directive to a single column or designate it as the default for all columns, as shown in the following `CREATE TABLE` clauses.
-
-_General Usage:_
-
-```
-column_name data_type ENCODING ( storage_directive [, … ] ), … 
-```
-```
-COLUMN column_name ENCODING ( storage_directive [, … ] ), …
-```
-```
-DEFAULT COLUMN ENCODING ( storage_directive [, … ] )
-```
-
-_Example:_
-
-```
-C1 char ENCODING (compresstype=quicklz, blocksize=65536)
-```
-```
-COLUMN C1 ENCODING (compresstype=zlib, compresslevel=6, blocksize=65536)
-```
-```
-DEFAULT COLUMN ENCODING (compresstype=quicklz)
-```
-
-## Default Compression Values
-If the compression type, compression level and block size are not defined, the default is no compression, and the block size is set to the Server Configuration Parameter `block_size` (unless otherwise defined `block_size` value is set by default to 32768).
-
-## Support for Run-length Encoding
-
-Greenplum Database supports Run-length Encoding (RLE) for column-level compression. RLE data compression stores repeated data as a single data value and a count. For example, in a table with two columns, a date and a description, that contains 200,000 entries containing the value `date1` and 400,000 entries containing the value `date2`, RLE compression for the date field is similar to `date1 200000 date2 400000`. RLE is not useful with files that do not have large sets of repeated data as it can greatly increase the file size.
-
-There are four levels of RLE compression available. The levels progressively increase the compression ratio, but decrease the compression speed.
-
-Greenplum Database versions 4.2.1 and later support column-oriented RLE compression. To backup a table with RLE compression that you intend to restore to an earlier version of Greenplum Database, alter the table to have no compression or a compression type supported in the earlier version (`ZLIB` or `QUICKLZ`) before you start the backup operation.
-
-Greenplum Database combines delta compression with RLE compression for data in columns of type `BIGINT`, `INTEGER`, `DATE`, `TIME`, or `TIMESTAMP`. The delta compression algorithm is based on the change between consecutive column values and is designed to improve compression when data is loaded in sorted order or when the compression is applied to data in sorted order.
-
-## Checking the Compression and Distribution of an Append-Optimized Table
-
-Greenplum provides built-in functions to check the compression ratio and the distribution of an append-optimized table. The functions take either the object ID or a table name. You can qualify the table name with a schema name.
-
-###### Table 3. Functions for compressed append-optimized table metadata
-
-
-## Testing
-
-### Preparing mock-up JSON data
-
-[data](https://github.com/cantzakas/gp-json/tree/master/data)
-- [MOCK_DATA.json](https://github.com/cantzakas/gp-json/blob/master/data/MOCK_DATA.json)
-
-### Preparing the tables
-
-- [CREATE_TABLE.sql](https://github.com/cantzakas/gp-json/blob/master/sql/CREATE_TABLE.sql)
-
-### Loading JSON data into the tables
-
-- [COPY_DATA.sql](https://github.com/cantzakas/gp-json/blob/master/sql/COPY_DATA.sql)
-- [INSERT_DATA.sql](https://github.com/cantzakas/gp-json/blob/master/sql/INSERT_DATA.sql)
-
+To collect compression ration results for each of the tables created, we used Greenplum `get_ao_compression_ratio()`function, which is described in detail on [Greenplum Database Administration Guide](https://gpdb.docs.pivotal.io/latest/admin_guide/ddl/ddl-storage.html#topic41). The complete SQL script used to run and collect compression ratio results is available [here](https://github.com/cantzakas/gp-json/blob/master/sql/FINAL_REPORT.sql).
 
 ## Results
 
-- [FINAL_REPORT.sql](https://github.com/cantzakas/gp-json/blob/master/sql/FINAL_REPORT.sql)
+The final results of the experiment, are shown here:
 
-| Compression Ratio vs. json\_standard | Table |
-| :---:                                | :---- |
+###### Table 3. Experiment final results table
+
+| Compression Ratio | Table              |
+| ---:     | :----                       |
 | 4.33 : 1 | json\_rle4\_blocksize32K    |
 | 4.14 : 1 | json\_rle4\_blocksize16K    |
 | 3.85 : 1 | json\_rle4\_blocksize8K     |
@@ -167,3 +147,7 @@ Greenplum provides built-in functions to check the compression ratio and the dis
 | 2.61 : 1 | json\_quicklz               |
 | 1 : 1    | json\_standard              |
 | 1 : 1    | json\_rle1                  |
+
+## Remarks and observations
+
+_finalize write-up; major observation is compression rate can vary from 2x-4x, depends on JSON size (number of bytes) and appropriate setting for `BLOCKSIZE` parameter. For future, GPDB 6.x, we may be able to do even more when `JSONB` would be available (first introduced into PostgreSQL 9.4)_
