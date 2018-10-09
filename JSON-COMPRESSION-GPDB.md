@@ -51,9 +51,8 @@ For generating our input JSON data, we made use of the [Mockaroo](https://www.mo
 
 Each of the 15K rows generated, looked similar to:
 
-```
+```json
 {"id":14480, "first_name":"Starlin", "last_name":"Franseco", "email":"sfransecodb@nasa.gov", "gender":"Female", "ip_address":"103.141.21.92"}
-
 ```
 
 The full generated dataset is available [here](https://github.com/cantzakas/gp-json/blob/master/data/MOCK_DATA.json).
