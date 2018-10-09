@@ -64,19 +64,67 @@ The following table details the types of storage directives and possible values 
 |                   |                     | `QUICKLZ`: fast compression     |                                |
 |                   |                     | `RLE_TYPE`: run-length encoding |                                |
 |                   |                     | `none`: no compression           |                                |
-| `COMPRESSTYPE`    | Type of compression | `ZLIB`: deflate algorithm, `QUICKLZ`: fast compression, `RLE_TYPE`: run-length encoding, `none`: no compression | Values are not case-sensitive. |
-| `COMPRESSLEVEL `  | Compression level   | `ZLIB` compression: 1-9, `QUICKLZ` compression: 1 (_use compression_), `RLE_TYPE` compression: 1 – 4 (1 - _apply RLE only_, 2 - _apply RLE then apply zlib compression level 1_, 3 - _apply RLE then apply zlib compression level 5_, 4 - _apply RLE then apply zlib compression level 9_. | `ZLIB` 1 is the default and the fastest method with the least compression. 
-`ZLIB` 9 is the slowest method with the most compression. `QUICKLZ` 1 is the default. `RLE_TYPE` 1 is the default and fastest method with the least compression, `RLE_TYPE` 4 is the slowest method with the most compression.|
+| `COMPRESSLEVEL `  | Compression level   | `ZLIB` compression: 1-9        | 1 is the fastest method with the least compression.<BR><BR>9 is the slowest method with the most compression.<BR><BR>1 is the default value. |
+|                   |                     | `QUICKLZ` compression: <BR><BR>1 - use compression | 1 is the default value. |
+|                   |                     | `RLE_TYPE` compression: 1 – 4<BR><BR>1 - apply RLE only<BR><BR>2 - apply RLE then apply zlib compression level 1<BR><BR>3 - apply RLE then apply zlib compression level 5<BR><BR>4 - apply RLE then apply zlib compression level 9 | 1 is fastest method with the least compression<BR><BR>4 is the slowest method with the most compression.<BR><BR>1 is the default value. |
 | `BLOCKSIZE `      | The size in bytes for each block in the table | `8192` - `2097152` | The value must be a multiple of 8192. |
+
+The following is the format for adding storage directives.
+
+```
+[ ENCODING ( storage_directive [,…] ) ]
+```
+where the word `ENCODING` is required and the storage directive has three parts:
+
+- The name of the directive
+- An equals sign
+- The specification
+
+Separate multiple storage directives with a comma. Apply a storage directive to a single column or designate it as the default for all columns, as shown in the following `CREATE TABLE` clauses.
+
+_General Usage:_
+
+```
+column_name data_type ENCODING ( storage_directive [, … ] ), … 
+```
+```
+COLUMN column_name ENCODING ( storage_directive [, … ] ), …
+```
+```
+DEFAULT COLUMN ENCODING ( storage_directive [, … ] )
+```
+
+_Example:_
+
+```
+C1 char ENCODING (compresstype=quicklz, blocksize=65536)
+```
+```
+COLUMN C1 ENCODING (compresstype=zlib, compresslevel=6, blocksize=65536)
+```
+```
+DEFAULT COLUMN ENCODING (compresstype=quicklz)
+```
+
+## Default Compression Values
+If the compression type, compression level and block size are not defined, the default is no compression, and the block size is set to the Server Configuration Parameter `block_size` (unless otherwise defined `block_size` value is set by default to 32768).
 
 ## Support for Run-length Encoding
 
-...
+Greenplum Database supports Run-length Encoding (RLE) for column-level compression. RLE data compression stores repeated data as a single data value and a count. For example, in a table with two columns, a date and a description, that contains 200,000 entries containing the value `date1` and 400,000 entries containing the value `date2`, RLE compression for the date field is similar to `date1 200000 date2 400000`. RLE is not useful with files that do not have large sets of repeated data as it can greatly increase the file size.
 
+There are four levels of RLE compression available. The levels progressively increase the compression ratio, but decrease the compression speed.
+
+Greenplum Database versions 4.2.1 and later support column-oriented RLE compression. To backup a table with RLE compression that you intend to restore to an earlier version of Greenplum Database, alter the table to have no compression or a compression type supported in the earlier version (`ZLIB` or `QUICKLZ`) before you start the backup operation.
+
+Greenplum Database combines delta compression with RLE compression for data in columns of type `BIGINT`, `INTEGER`, `DATE`, `TIME`, or `TIMESTAMP`. The delta compression algorithm is based on the change between consecutive column values and is designed to improve compression when data is loaded in sorted order or when the compression is applied to data in sorted order.
 
 ## Checking the Compression and Distribution of an Append-Optimized Table
 
-...
+Greenplum provides built-in functions to check the compression ratio and the distribution of an append-optimized table. The functions take either the object ID or a table name. You can qualify the table name with a schema name.
+
+###### Table 3. Functions for compressed append-optimized table metadata
+
 
 ## Testing
 
