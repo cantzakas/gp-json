@@ -1,5 +1,3 @@
-SELECT COUNT(*) FROM json_standard;
-
 DELETE FROM json_zlib1;
 INSERT INTO json_zlib1
 	SELECT * FROM json_standard;
