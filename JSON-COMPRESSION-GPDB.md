@@ -110,15 +110,17 @@ Loading the generated JSON data into the tables, was done in two steps:
   INSERT INTO json_quicklz_blocksize32K
 	SELECT array_to_json(array_agg(col1))
 	FROM (
-		SELECT col1::text, ((col1->>'id')::int)%75 AS modulo150_result
+		SELECT col1::text, ((col1->>'id')::int)%75 AS modulo_result
 		FROM json_standard
 	) A
-	GROUP BY modulo150_result;
+	GROUP BY modulo_result;
   ```
 
 ### 4. Run & collect compression ratio results
 
-To collect compression ration results for each of the tables created, we used Greenplum `get_ao_compression_ratio()`function, which is described in detail on [Greenplum Database Administration Guide](https://gpdb.docs.pivotal.io/latest/admin_guide/ddl/ddl-storage.html#topic41). The complete SQL script used to run and collect compression ratio results is available [here](https://github.com/cantzakas/gp-json/blob/master/sql/FINAL_REPORT.sql).
+To collect compression ration results for each of the tables created, we used Greenplum `get_ao_compression_ratio()`function, which is described in detail on [Greenplum Database Administration Guide](https://gpdb.docs.pivotal.io/latest/admin_guide/ddl/ddl-storage.html#topic41).
+
+The complete SQL script used to run and collect compression ratio results is available [here](https://github.com/cantzakas/gp-json/blob/master/sql/FINAL_REPORT.sql).
 
 ## Results
 
@@ -127,25 +129,25 @@ The final results of the experiment, are shown here:
 ###### Table 3. Experiment final results table
 
 | Compression Ratio | Table              |
-| ---:     | :----                       |
-| 4.33 : 1 | json\_rle4\_blocksize32K    |
-| 4.14 : 1 | json\_rle4\_blocksize16K    |
-| 3.85 : 1 | json\_rle4\_blocksize8K     |
-| 3.81 : 1 | json\_zlib1\_blocksize32K   |
-| 3.72 : 1 | json\_zlib1\_blocksize16K   |
+| ---:              | :----              |
+| 4.30 : 1 | json\_rle4\_blocksize32K    |
+| 4.11 : 1 | json\_rle4\_blocksize16K    |
+| 3.86 : 1 | json\_rle4\_blocksize8K     |
+| 3.78 : 1 | json\_zlib1\_blocksize32K   |
+| 3.69 : 1 | json\_zlib1\_blocksize16K   |
 | 3.66 : 1 | json\_rle4                  |
-| 3.57 : 1 | json\_rle3                  |
+| 3.56 : 1 | json\_rle3                  |
 | 3.52 : 1 | json\_zlib1\_blocksize8K    |
 | 3.48 : 1 | json\_zlib9                 |
 | 3.41 : 1 | json\_zlib5                 |
-| 3.2 : 1  | json\_rle2                  |
+| 3.20 : 1 | json\_rle2                  |
 | 3.11 : 1 | json\_quicklz\_blocksize32K |
 | 3.07 : 1 | json\_zlib1                 |
 | 2.97 : 1 | json\_quicklz\_blocksize16K |
 | 2.73 : 1 | json\_quicklz\_blocksize8K  |
-| 2.61 : 1 | json\_quicklz               |
-| 1 : 1    | json\_standard              |
-| 1 : 1    | json\_rle1                  |
+| 2.62 : 1 | json\_quicklz               |
+| 1.00 : 1 | json\_standard              |
+| 1.00 : 1 | json\_rle1                  |
 
 ## Remarks and observations
 
