@@ -165,6 +165,6 @@ _finalize write-up; major observation is compression rate can vary from 2x-4x, d
   | ZLIB 1            | 3.07 | 3.52 | 3.69 | 3.78 |
   | RLE 4             | 3.66 | 3.86 | 4.11 | 4.30 |
   
-- At the time this experiment took place (October 2018), the latest version of Greenplum Database (v5.11.2) only supports the `JSON` data types of variable unlimited length with a total size of 1 byte + JSON size. This is due to the Greenplum Database be based on PostgreSQL v8.3. 
+- At the time this experiment took place (October 2018), the latest version of Greenplum Database (v5.11.2) only supports the `JSON` data types of variable unlimited length with a total size of 1 byte + JSON size. This is due to the Greenplum Database which is based on PostgreSQL v8.3. 
 
   As of PostgreSQL 9.4 there are two available JSON data types: `JSON` and `JSONB`. They accept almost identical sets of values as input but their major practical difference is one of efficiency. The `JSON` data type stores an exact copy of the input text, which processing functions must reparse on each execution, while `JSONB` data is stored in a decomposed binary format that makes it slightly slower to input due to added conversion overhead, but significantly faster to process, since no reparsing is needed. Further experiments on compressing JSON data should be performed when the next major version (6.x) of Greenplum Database is released (Greenplum Database v6.x is expected to be based on PostgreSQL v9.4 or later).
