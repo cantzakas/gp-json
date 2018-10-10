@@ -104,7 +104,7 @@ Loading the generated JSON data into the tables, was done in two steps:
 
   | **Note**: |
   | :--- |
-  | Each of the JSON data entries, imported previously from the test dataset is about 140 bytes long (min 118 bytes, max 166 bytes). In order to create data columns of variable `BLOCKSIZE`, we split into groups multiple individual JSON data rows into JSON arrays array. For to make sure, "same" number of items end up on each group/array, we estimate the modulo of the original JSON data ID by a fixed number, i.e.: |
+  | Each of the JSON data entries, imported previously from the test dataset is about 140 bytes long (min 118 bytes, max 166 bytes). In order to create data columns of variable `BLOCKSIZE`, we split into groups multiple individual JSON data rows into JSON arrays array. For to make sure, "same" number of items end up on each group/array, we estimate the modulo of the original JSON data ID by a fixed number. |
   
   ```sql
   INSERT INTO json_quicklz_blocksize32K
