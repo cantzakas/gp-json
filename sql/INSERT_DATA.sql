@@ -1,26 +1,26 @@
 INSERT INTO json_zlib1
-  SELECT * FROM json_standard;
+	SELECT * FROM json_standard;
   
 INSERT INTO json_zlib5
-  SELECT * FROM json_standard;
+	SELECT * FROM json_standard;
   
 INSERT INTO json_zlib9
-  SELECT * FROM json_standard;
+	SELECT * FROM json_standard;
   
 INSERT INTO json_quicklz
-  SELECT * FROM json_standard;
+	SELECT * FROM json_standard;
   
 INSERT INTO json_rle1
-  SELECT * FROM json_standard;
+	SELECT * FROM json_standard;
   
 INSERT INTO json_rle2
-  SELECT * FROM json_standard;
+	SELECT * FROM json_standard;
   
 INSERT INTO json_rle3
-  SELECT * FROM json_standard;
+	SELECT * FROM json_standard;
   
 INSERT INTO json_rle4
-  SELECT * FROM json_standard;
+	SELECT * FROM json_standard;
 
 INSERT INTO json_quicklz_blocksize8K
 	SELECT array_to_json(array_agg(col1)) # produces rows of size 7,855 - 8,100 bytes
