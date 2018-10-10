@@ -130,38 +130,49 @@ The final results of the experiment, are shown here:
 
 | Compression Ratio | Table              |
 | ---:              | :----              |
-| 4.30 : 1 | json\_rle4\_blocksize32K    |
-| 4.11 : 1 | json\_rle4\_blocksize16K    |
-| 3.86 : 1 | json\_rle4\_blocksize8K     |
-| 3.78 : 1 | json\_zlib1\_blocksize32K   |
-| 3.69 : 1 | json\_zlib1\_blocksize16K   |
-| 3.66 : 1 | json\_rle4                  |
-| 3.56 : 1 | json\_rle3                  |
-| 3.52 : 1 | json\_zlib1\_blocksize8K    |
-| 3.48 : 1 | json\_zlib9                 |
-| 3.41 : 1 | json\_zlib5                 |
-| 3.20 : 1 | json\_rle2                  |
-| 3.11 : 1 | json\_quicklz\_blocksize32K |
-| 3.07 : 1 | json\_zlib1                 |
-| 2.97 : 1 | json\_quicklz\_blocksize16K |
-| 2.73 : 1 | json\_quicklz\_blocksize8K  |
-| 2.62 : 1 | json\_quicklz               |
-| 1.00 : 1 | json\_standard              |
-| 1.00 : 1 | json\_rle1                  |
+| 4.56 | json\_rle4\_blocksize64K |
+| 4.53 | json\_rle4_blocksize128K |
+| 4.42 | json\_rle4\_blocksize32K |
+| 4.24 | json\_rle4\_blocksize16K |
+| 4.00 | json\_rle4\_blocksize8K |
+| 3.94 | json\_zlib1\_blocksize64K |
+| 3.87 | json\_zlib1\_blocksize32K |
+| 3.85 | json\_zlib1\_blocksize128K |
+| 3.78 | json\_zlib1\_blocksize16K |
+| 3.67 | json\_rle4 |
+| 3.63 | json\_zlib1\_blocksize8K |
+| 3.57 | json\_rle3 |
+| 3.48 | json\_zlib9 |
+| 3.41 | json\_zlib5 |
+| 3.27 | json\_quicklz\_blocksize64K |
+| 3.22 | json\_quicklz\_blocksize128K |
+| 3.20 | json\_rle2 |
+| 3.16 | json\_quicklz\_blocksize32K |
+| 3.07 | json\_zlib1 |
+| 3.01 | json\_quicklz\_blocksize16K |
+| 2.82 | json\_quicklz\_blocksize8K |
+| 2.61 | json\_quicklz |
+| 1.00 | json\_standard |
+| 1.00 | json\_rle1 |
 
 ## Remarks and observations
 
 - Compression ratios achieved can vary depending on the algorith used, i.e. from ~2.6x and ~3x using "standard" `QUICKLZ` and `ZLIB` algorithms up to ~4.3x using a "tuned" version of `RLE_TYPE` algorithm (`COMPRESSLEVEL = 4, BLOCKSIZE = 32768`) vs. the baseline table.
 - For all different combinations of `COMPRESSLEVEL`&`BLOCKSIZE` values, the `RLE_TYPE` algorithm achieves better compression ratios vs. the `ZLIB` algorithm and both better compression ratios vs. the `QUICKLZ` algorithm.
-- For tables in which JSON data size "matches" the defined `BLOCKSIZE` value, i.e. `BLOCKSIZE=8K, DATASIZE~=8K`, `BLOCKSIZE=16K, DATASIZE~=16K` or `BLOCKSIZE=32K, DATASIZE~=32K`, all 3 algorithms achieve better compression ratios vs. tables in which the JSON data size is significantly smaller than defined the `BLOCKSIZE` value, i.e. `BLOCKSIZE=8K, DATASIZE<1K`. Actually, the bigger the `BLOCKSIZE` defined, the better compression ratio is achieved.
+- For tables in which JSON data size "matches" the defined `BLOCKSIZE` value, i.e. `BLOCKSIZE=8K, DATASIZE~=8K`, `BLOCKSIZE=16K, DATASIZE~=16K` or `BLOCKSIZE=32K, DATASIZE~=32K`, all 3 algorithms achieve better compression ratios vs. tables in which the JSON data size is significantly smaller than defined the `BLOCKSIZE` value, i.e. `BLOCKSIZE=8K, DATASIZE<1K`. 
+- Moving from smaller to bigger values for the `BLOCKSIZE` parameter, better compression ratios are achieved for values up to 64K (65536). Further than that, i.e. for `BLOCKSIZE` value equal to 128K (131072), the increase in compression ratio either drops or flattens out.
 
   ###### Table 4. Comparison of Compression Ratios Achieved Results
 
-  | **COMPRESS TYPE** | **BLOCKSIZE=32K<BR>DATASIZE=1K** | **BLOCKSIZE=8K<BR>DATASIZE=8K** | **BLOCKSIZE=16K<BR>DATASIZE=16K** | **BLOCKSIZE=32K<BR>DATASIZE=32K** | 
-  | ---:              | ---: | ---: | ---: | ---: |
-  | QUICKLZ           | 2.62 | 2.73 | 2.97 | 3.11 |
-  | ZLIB 1            | 3.07 | 3.52 | 3.69 | 3.78 |
-  | RLE 4             | 3.66 | 3.86 | 4.11 | 4.30 |
+  | **COMPRESS TYPE** | **BLOCKSIZE=32K<BR>DATASIZE=1K** | **BLOCKSIZE=8K<BR>DATASIZE=8K** | **BLOCKSIZE=16K<BR>DATASIZE=16K** | **BLOCKSIZE=32K<BR>DATASIZE=32K** | **BLOCKSIZE=64K<BR>DATASIZE=64K** | **BLOCKSIZE=128K<BR>DATASIZE=128K** | 
+  | ---:              | ---: | ---: | ---: | ---: | ---: | ---: |
+  | QUICKLZ           | 2.61 | 2.82 | 3.01 | 3.16 | 3.27 | 3.22 |
+  | ZLIB 1            | 3.07 | 3.63 | 3.78 | 3.87 | 3.94 | 3.85 |
+  | RLE 4             | 3.67 | 4.00 | 4.24 | 4.42 | 4.56 | 4.53 |
+  
+  
+3.07	3.63	3.78	3.87	3.94	3.85
+
   
 - At the time this experiment took place (October 2018), the latest version of Greenplum Database (v5.11.2) only supports the `JSON` data types of variable unlimited length with a total size of 1 byte + JSON size. This is due to the Greenplum Database which is based on PostgreSQL v8.3. 
 
