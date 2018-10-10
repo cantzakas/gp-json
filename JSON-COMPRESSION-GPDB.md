@@ -151,8 +151,6 @@ The final results of the experiment, are shown here:
 
 ## Remarks and observations
 
-_finalize write-up; major observation is compression rate can vary from 2x-4x, depends on JSON size (number of bytes) and appropriate setting for `BLOCKSIZE` parameter. For future, GPDB 6.x, we may be able to do even more when `JSONB` would be available (first introduced into PostgreSQL 9.4)_
-
 - Compression ratios achieved can vary depending on the algorith used, i.e. from ~2.6x and ~3x using "standard" `QUICKLZ` and `ZLIB` algorithms up to ~4.3x using a "tuned" version of `RLE_TYPE` algorithm (COMPRESSLEVEL = 4, BLOCKSIZE = 32768) vs. the baseline table.
 - For all different combinations of `COMPRESSLEVEL`&`BLOCKSIZE` values, the `RLE_TYPE` algorithm achieves better compression ratios vs. the `ZLIB` algorithm and both better compression ratios vs. the `QUICKLZ` algorithm.
 - For tables in which JSON data size "matches" the defined `BLOCKSIZE` value, i.e. `BLOCKSIZE=8K, DATASIZE~=8K`, `BLOCKSIZE=16K, DATASIZE~=16K` or `BLOCKSIZE=32K, DATASIZE~=32K`, all 3 algorithms achieve better compression ratios vs. tables in which the JSON data size is significantly smaller than defined the `BLOCKSIZE` value, i.e. `BLOCKSIZE=8K, DATASIZE<1K`. Actually, the bigger the `BLOCKSIZE` defined, the better compression ratio is achieved.
