@@ -37,7 +37,7 @@ The experiment described below, focuses on checking the compression capabilities
 
 ### 1. Create test JSON data
 
-For generating our input JSON data, we made use of the [Mockaroo](https://www.mocharoo.com) application; Mockaroo's Free plans are limited to 200 requests per day and can generate up to 1,000 rows of realistic test data per request. For our tests, we generated a total of 15K rows with the following format (check [Mockaroo Documentation](https://www.mockaroo.com/api/docs) for more information on the supported types):
+For generating our input JSON data, we made use of the [Mockaroo](https://www.mocharoo.com) application; Mockaroo's Free plans are limited to 200 requests per day and can generate up to 1,000 rows of realistic test data per request. For our tests, we generated a total of 50K rows with the following format (check [Mockaroo Documentation](https://www.mockaroo.com/api/docs) for more information on the supported types):
 
 ###### Table 1. Test JSON data specification
 
@@ -49,7 +49,7 @@ For generating our input JSON data, we made use of the [Mockaroo](https://www.mo
 | email      | _Email Address_ |
 | ip_address | _IP Address v4_ |
 
-Each of the 15K rows generated, looked similar to:
+Each of the rows generated, follows a format similar to:
 
 ```json
 {"id":14480, "first_name":"Starlin", "last_name":"Franseco", "email":"sfransecodb@nasa.gov", "gender":"Female", "ip_address":"103.141.21.92"}
@@ -67,8 +67,8 @@ Different data table were then created for each of the baseline (no compression)
 | :---            | :---          | :---              | :---       |
 | json\_standard  | Append-Optimized | Row | The original/baseline, non-compressed table |
 | json\_zlib1     | Append-Optimized | Row | COMPRESSTYPE =`ZLIB`, COMPRESSLEVEL = 1     |
-| json\_zlib1     | Append-Optimized | Row | COMPRESSTYPE =`ZLIB`, COMPRESSLEVEL = 5     |
-| json\_zlib1     | Append-Optimized | Row | COMPRESSTYPE =`ZLIB`, COMPRESSLEVEL = 9     |
+| json\_zlib5     | Append-Optimized | Row | COMPRESSTYPE =`ZLIB`, COMPRESSLEVEL = 5     |
+| json\_zlib9     | Append-Optimized | Row | COMPRESSTYPE =`ZLIB`, COMPRESSLEVEL = 9     |
 | json\_quicklz   | Append-Optimized | Row | COMPRESSTYPE =`QUICKLZ`                     |
 | json\_rle1      | Append-Optimized | Row | COMPRESSTYPE =`RLE_TYPE`, COMPRESSLEVEL = 1 |
 | json\_rle2      | Append-Optimized | Row | COMPRESSTYPE =`RLE_TYPE`, COMPRESSLEVEL = 2 |
@@ -152,3 +152,19 @@ The final results of the experiment, are shown here:
 ## Remarks and observations
 
 _finalize write-up; major observation is compression rate can vary from 2x-4x, depends on JSON size (number of bytes) and appropriate setting for `BLOCKSIZE` parameter. For future, GPDB 6.x, we may be able to do even more when `JSONB` would be available (first introduced into PostgreSQL 9.4)_
+
+- Compression ratios achieved can vary depending on the algorith used, i.e. from ~2.6x and ~3x using "standard" `QUICKLZ` and `ZLIB` algorithms up to ~4.3x using a "tuned" version of `RLE_TYPE` algorithm (COMPRESSLEVEL = 4, BLOCKSIZE = 32768) vs. the baseline table.
+- For all different combinations of `COMPRESSLEVEL`&`BLOCKSIZE` values, the `RLE_TYPE` algorithm achieves better compression ratios vs. the `ZLIB` algorithm and both better compression ratios vs. the `QUICKLZ` algorithm.
+- For tables in which JSON data size "matches" the defined `BLOCKSIZE` value, i.e. `BLOCKSIZE=8K, DATASIZE~=8K`, `BLOCKSIZE=16K, DATASIZE~=16K` or `BLOCKSIZE=32K, DATASIZE~=32K`, all 3 algorithms achieve better compression ratios vs. tables in which the JSON data size is significantly smaller than defined the `BLOCKSIZE` value, i.e. `BLOCKSIZE=8K, DATASIZE<1K`. Actually, the bigger the `BLOCKSIZE` defined, the better compression ratio is achieved.
+
+  ###### Table 4. Comparison of Compression Ratios Achieved Results
+
+  | **COMPRESS TYPE** | **BLOCKSIZE=32K<BR>DATASIZE=1K** | **BLOCKSIZE=8K<BR>DATASIZE=8K** | **BLOCKSIZE=16K<BR>DATASIZE=16K** | **BLOCKSIZE=32K<BR>DATASIZE=32K** | 
+  | ---:              | ---: | ---: | ---: | ---: |
+  | QUICKLZ           | 2.62 | 2.73 | 2.97 | 3.11 |
+  | ZLIB 1            | 3.07 | 3.52 | 3.69 | 3.78 |
+  | RLE 4             | 3.66 | 3.86 | 4.11 | 4.30 |
+  
+- At the time this experiment took place (October 2018), the latest version of Greenplum Database (v5.11.2) only supports the `JSON` data types of variable unlimited length with a total size of 1 byte + JSON size. This is due to the Greenplum Database be based on PostgreSQL v8.3. 
+
+  As of PostgreSQL 9.4 there are two available JSON data types: `JSON` and `JSONB`. They accept almost identical sets of values as input but their major practical difference is one of efficiency. The `JSON` data type stores an exact copy of the input text, which processing functions must reparse on each execution, while `JSONB` data is stored in a decomposed binary format that makes it slightly slower to input due to added conversion overhead, but significantly faster to process, since no reparsing is needed. Further experiments on compressing JSON data should be performed when the next major version (6.x) of Greenplum Database is released (Greenplum Database 6.x is to be based into PostgreSQL 9.4+).
