@@ -1,5 +1,4 @@
 # Loading JSON Data in Pivotal Greenplum Database
-## Data
 
 We [previously](GETTING-STARTED-GUIDE.MD) described briefly, that for the purposes of this demo, we are using the [UK Police Data REST API](data.police.uk) as our source of data. 
 
