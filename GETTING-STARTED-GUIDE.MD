@@ -3,12 +3,12 @@
 - [Bill of Materials](GETTING-STARTED-GUIDE.MD#bill-of-materials)
   - [Software](GETTING-STARTED-GUIDE.MD#software)
   - [Data](GETTING-STARTED-GUIDE.MD#data)
-- [Disclaimer](GETTING-STARTED-GUIDE.MD#disclaimer)
 - [Introduction to Pivotal Greenplum Database and JSON Data](GETTING-STARTED-GUIDE.MD#introduction-to-pivotal-greenplum-database)
   - [Pivotal Greenplum Database](GETTING-STARTED-GUIDE.MD#pivotal-greenplum-database)
   - [JSON Data Support in Pivotal Greenplum Database](GETTING-STARTED-GUIDE.MD#json-data-support-in-pivotal-greenplum-database)
   - [JSON Functions and Operators](GETTING-STARTED-GUIDE.MD#json-functions-and-operators)
-- [Practical Examples & Exercises](GETTING-STARTED-GUIDE.MD#practical-examples--exercices)
+- [Loading JSON Data in Pivotal Greenplum Database](https://github.com/cantzakas/gp-json/blob/master/LOADING-JSON-DATA.md).
+- [Practical examples of using JSON Data in Pivotal Greenplum Database](https://github.com/cantzakas/gp-json/blob/master/JSON-EXAMPLES.md).
 
 # Purpose
 
@@ -24,7 +24,11 @@ The purpose of this Getting Started Guide is to demonstrate the support and capa
 - Greenplum Database Sandbox OVA for VMWare (available to download from [Pivotal Network](https://network.pivotal.io/products/pivotal-gpdb)).
 
 ## Data
-# Disclaimer
+
+- For the purposes of this *Getting Started Guide*, we are using the [UK Police Data REST API](data.police.uk) as our source of data. 
+- [data.police.uk](data.police.uk) is the site for open data about crime and policing in England, Wales and Northern Ireland. One can download street-level crime, outcome, and stop and search data in clear and simple format and explore the API containing detailed crime data and information about individual police forces and neighbourhood teams. One can also download data on police activity, and a range of data collected under the police annual data requirement (ADR) including arrests and 101 call handling.
+- All the data on [data.police.uk](data.police.uk) is made available under the Open Government Licence v3.0.
+
 # Introduction to Pivotal Greenplum Database and JSON Data
 ## Pivotal Greenplum Database
 
