@@ -1,6 +1,6 @@
 # Loading JSON Data in Pivotal Greenplum Database
 
-We [previously](GETTING-STARTED-GUIDE.MD) described briefly, that for the purposes of this demo, we are using the [UK Police Data REST API](data.police.uk) as our source of data. 
+We [previously](GETTING-STARTED-GUIDE.MD) described briefly, that for the purposes of this demo, we are using the [UK Police Data REST API](https://data.police.uk/) as our source of data. 
 
 I call a REST API to produce my  JSON files. check https://data.police.uk/api/stops-street?poly=51.3,-0.3:51.3,0.1:51.4,-0.5:51.4,0.2:51.5,-0.5:51.5,0.3:51.6,-0.5:51.6,0.3:51.7,-0.3:51.7,0&date=2018-01 where the value of `poly` is a good enough approximation of London Metropolitan area and `date` is the date in `YYYY-MM` format
 I query this REST API to produce a JSON file for each month, similar to the following:
